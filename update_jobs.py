@@ -3,13 +3,13 @@ import requests
 from io import StringIO
 from datetime import datetime
 
-# Configuration
+# Configuration - Table 3 Specific
 SHEET_ID = '1SHM5ut3bUQP6NUZ3_a9Q7Bkp60EY5NEM4oNIFaMMHL4'
-GID = '736783278'  # Your Table 3 GID
+GID = '736783278'
 URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}'
 
 def create_xml(df):
-    # Timestamp to force GitHub to recognize a change
+    # Timestamp to force GitHub to recognize a file change
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     xml = ['<?xml version="1.0" encoding="UTF-8"?>']
@@ -20,7 +20,7 @@ def create_xml(df):
         xml.append('  <job>')
         
         for col_name in df.columns:
-            # Converts "Job Description" to "job_description" and "ID" to "id"
+            # Converts headers (e.g., "Job Description" -> "job_description")
             tag = str(col_name).strip().replace(' ', '_').lower()
             
             # Handle data and convert to string
@@ -38,7 +38,7 @@ def create_xml(df):
 
 def main():
     try:
-        print(f"Fetching data from Table 3 (GID: {GID})...")
+        print(f"Fetching curated data from Table 3 (GID: {GID})...")
         response = requests.get(URL)
         response.raise_for_status() 
         
@@ -46,10 +46,10 @@ def main():
         df = pd.read_csv(StringIO(response.text)).dropna(how='all')
         
         if df.empty:
-            print("No data found in Table 3.")
+            print("No data found in Table 3. Check if your Google Script has run.")
             return
 
-        print(f"Processing {len(df)} jobs with columns: {list(df.columns)}")
+        print(f"Processing {len(df)} jobs...")
         
         # Create XML content
         xml_data = create_xml(df)
