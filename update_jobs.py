@@ -3,9 +3,12 @@ import requests
 from io import StringIO
 from datetime import datetime
 
-# Your specific Google Sheet ID and Export URL
+# Your specific Google Sheet ID and the GID for Table 3
 SHEET_ID = '1SHM5ut3bUQP6NUZ3_a9Q7Bkp60EY5NEM4oNIFaMMHL4'
-URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv'
+GID = '736783278'
+
+# This URL now pulls specifically from the curated Table 3
+URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}'
 
 def create_xml(df):
     # Current time ensures GitHub always sees a file change
@@ -20,7 +23,7 @@ def create_xml(df):
         
         # This loop looks at your Sheet's headers and creates tags automatically
         for col_name in df.columns:
-            # Clean column names: no spaces, all lowercase (e.g., "Company Name" -> "company_name")
+            # Clean column names: no spaces, all lowercase (e.g., "Job Description" -> "job_description")
             tag = str(col_name).strip().replace(' ', '_').lower()
             
             # Handle the data in the row
@@ -38,7 +41,7 @@ def create_xml(df):
 
 def main():
     try:
-        print("Connecting to Google Sheets...")
+        print(f"Connecting to Google Sheet Table 3 (GID: {GID})...")
         response = requests.get(URL)
         response.raise_for_status() 
         
@@ -47,11 +50,11 @@ def main():
         
         # Logic to ensure we actually have data
         if df.empty:
-            print("Warning: Google Sheet appears to be empty.")
+            print("Warning: Table 3 appears to be empty.")
             return
 
         print(f"Found columns: {list(df.columns)}")
-        print(f"Processing {len(df)} jobs...")
+        print(f"Processing {len(df)} curated jobs...")
         
         # Generate the XML
         xml_data = create_xml(df)
