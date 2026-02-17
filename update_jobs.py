@@ -3,15 +3,13 @@ import requests
 from io import StringIO
 from datetime import datetime
 
-# Your specific Google Sheet ID and the GID for Table 3
+# Configuration
 SHEET_ID = '1SHM5ut3bUQP6NUZ3_a9Q7Bkp60EY5NEM4oNIFaMMHL4'
-GID = '736783278'
-
-# This URL now pulls specifically from the curated Table 3
+GID = '736783278'  # Your Table 3 GID
 URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}'
 
 def create_xml(df):
-    # Current time ensures GitHub always sees a file change
+    # Timestamp to force GitHub to recognize a change
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     xml = ['<?xml version="1.0" encoding="UTF-8"?>']
@@ -21,15 +19,14 @@ def create_xml(df):
     for _, row in df.iterrows():
         xml.append('  <job>')
         
-        # This loop looks at your Sheet's headers and creates tags automatically
         for col_name in df.columns:
-            # Clean column names: no spaces, all lowercase (e.g., "Job Description" -> "job_description")
+            # Converts "Job Description" to "job_description" and "ID" to "id"
             tag = str(col_name).strip().replace(' ', '_').lower()
             
-            # Handle the data in the row
+            # Handle data and convert to string
             val = str(row[col_name]) if pd.notna(row[col_name]) else ""
             
-            # XML Safety: Escaping characters that break XML structure
+            # XML Safety: Escape problematic characters
             val = val.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             
             xml.append(f'    <{tag}>{val}</{tag}>')
@@ -41,32 +38,30 @@ def create_xml(df):
 
 def main():
     try:
-        print(f"Connecting to Google Sheet Table 3 (GID: {GID})...")
+        print(f"Fetching data from Table 3 (GID: {GID})...")
         response = requests.get(URL)
         response.raise_for_status() 
         
-        # Load data
+        # Load the CSV data exported from Google Sheets
         df = pd.read_csv(StringIO(response.text)).dropna(how='all')
         
-        # Logic to ensure we actually have data
         if df.empty:
-            print("Warning: Table 3 appears to be empty.")
+            print("No data found in Table 3.")
             return
 
-        print(f"Found columns: {list(df.columns)}")
-        print(f"Processing {len(df)} curated jobs...")
+        print(f"Processing {len(df)} jobs with columns: {list(df.columns)}")
         
-        # Generate the XML
+        # Create XML content
         xml_data = create_xml(df)
         
-        # Save to the repository
+        # Write to file
         with open('jobs_feed.xml', 'w', encoding='utf-8') as f:
             f.write(xml_data)
             
         print("Successfully updated jobs_feed.xml")
         
     except Exception as e:
-        print(f"Error occurred: {e}")
+        print(f"Error: {e}")
         exit(1)
 
 if __name__ == "__main__":
